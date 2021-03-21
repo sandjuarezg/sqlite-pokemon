@@ -56,11 +56,14 @@ func ShowPokemonAttackAll(db *sql.DB) {
 	defer rows.Close()
 
 	var pokemon_attack = Pokemon_attack{}
-	fmt.Printf("|%-10s|%-10s|\n", "id_pokemon", "id_attack")
-	fmt.Println("_______________________")
+	fmt.Printf("|%-10s|%-10s|%-10s|%-10s|%-10s|%-12s|%-10s|%-10s|%-10s|\n", "id_pokemon", "Name", "Type", "Level", "id_attack", "Name", "Power", "Defense", "Seep")
+	fmt.Println("______________________________________________________________________________________________________")
 	for rows.Next() {
 		rows.Scan(&pokemon_attack.Id_pokemon, &pokemon_attack.Id_attack)
-		fmt.Printf("|%-10d|%-10d|\n", pokemon_attack.Id_pokemon, pokemon_attack.Id_attack)
+		var pokemon, _ = SearchPokemon(db, pokemon_attack.Id_pokemon)
+		var attack, _ = SearchAttacks(db, pokemon_attack.Id_attack)
+
+		fmt.Printf("|%-10d|%-10s|%-10s|%-10d|%-10d|%-12s|%-10d|%-10d|%-10d|\n", pokemon.Id, pokemon.Name, pokemon.Type, pokemon.Level, attack.Id, attack.Name, attack.Power, attack.Defense, attack.Speed)
 	}
 }
 

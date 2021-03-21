@@ -1,12 +1,12 @@
 CREATE TABLE IF NOT EXISTS users(
-    id_user INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     password TEXT NOT NULL,
     ocupation TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS pokemons(
-    id_pokemon INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     type TEXT NOT NULL,
     level INTEGER NOT NULL
@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS user_pokemon(
 );
 
 CREATE TABLE IF NOT EXISTS attacks(
-    id_attack INTEGER PRIMARY KEY,
+    id INTEGER PRIMARY KEY,
     name TEXT NOT NULL,
     power INTEGER NOT NULL,
     defense INTEGER NOT NULL,
@@ -55,7 +55,7 @@ INSERT INTO user_pokemon (id_user, id_pokemon)
         (2,1),
         (4,6),
         (2,2),
-        (5,5);
+        (3,5);
 
 INSERT INTO attacks (name, power, defense, speed) 
     VALUES
@@ -67,9 +67,9 @@ INSERT INTO attacks (name, power, defense, speed)
 INSERT INTO pokemon_attack (id_pokemon, id_attack) 
     VALUES
         (1,3),
-        (3,7),
+        (3,4),
         (1,4),
         (2,1),
-        (4,6),
+        (7,3),
         (2,2);
         

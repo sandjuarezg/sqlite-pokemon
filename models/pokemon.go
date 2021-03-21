@@ -70,7 +70,7 @@ func AddPokemon(db *sql.DB) {
 			exit = true
 		default:
 			fmt.Println("Option not valid")
-			function.CleanConsole()
+			function.CleanConsole(2)
 		}
 	}
 	fmt.Println("Enter a lever")
@@ -79,7 +79,7 @@ func AddPokemon(db *sql.DB) {
 }
 
 func ShowPokemon(db *sql.DB) {
-	rows, err := db.Query("SELECT id_pokemon, name, type, level FROM pokemons")
+	rows, err := db.Query("SELECT id, name, type, level FROM pokemons")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -95,7 +95,7 @@ func ShowPokemon(db *sql.DB) {
 }
 
 func UpdatePokemon(db *sql.DB) int64 {
-	statement, err := db.Prepare("UPDATE pokemons SET level = ? WHERE id_pokemon = ?")
+	statement, err := db.Prepare("UPDATE pokemons SET level = ? WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -114,7 +114,7 @@ func UpdatePokemon(db *sql.DB) int64 {
 }
 
 func DeletePokemon(db *sql.DB) int64 {
-	var statement, err = db.Prepare("DELETE from pokemons WHERE id_pokemon = ?")
+	var statement, err = db.Prepare("DELETE from pokemons WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -131,7 +131,7 @@ func DeletePokemon(db *sql.DB) int64 {
 
 func SearchPokemon(db *sql.DB, id int) (pokemon *Pokemon, err error) {
 	var aux Pokemon
-	var row = db.QueryRow("SELECT id_pokemon, name, type, level FROM pokemons WHERE id_pokemon = ?", id)
+	var row = db.QueryRow("SELECT id, name, type, level FROM pokemons WHERE id = ?", id)
 	err = row.Scan(&aux.Id, &aux.Name, &aux.Type, &aux.Level)
 	if err != nil {
 		return

@@ -56,11 +56,14 @@ func ShowUserPokemonAll(db *sql.DB) {
 	defer rows.Close()
 
 	var user_pokemon = User_pokemon{}
-	fmt.Printf("|%-7s|%-10s|\n", "id_user", "id_pokemon")
-	fmt.Println("____________________")
+	fmt.Printf("|%-7s|%-15s|%-10s|%-15s|%-10s|%-10s|%-10s|%-10s|\n", "id_user", "Name", "Password", "Ocupation", "id_pokemon", "Name", "Type", "Level")
+	fmt.Println("_________________________________________________________________________________________")
 	for rows.Next() {
 		rows.Scan(&user_pokemon.Id_user, &user_pokemon.Id_pokemon)
-		fmt.Printf("|%-7d|%-10d|\n", user_pokemon.Id_user, user_pokemon.Id_pokemon)
+		var user, _ = SearchUser(db, user_pokemon.Id_user)
+		var pokemon, _ = SearchPokemon(db, user_pokemon.Id_pokemon)
+
+		fmt.Printf("|%-7d|%-15s|%-10s|%-15s|%-10d|%-10s|%-10s|%-10d|\n", user.Id, user.Name, user.Pass, user.Ocupa, pokemon.Id, pokemon.Name, pokemon.Type, pokemon.Level)
 	}
 }
 

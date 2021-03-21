@@ -8,7 +8,7 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Attacks struct {
+type Attack struct {
 	Id      int
 	Name    string
 	Power   int
@@ -23,7 +23,7 @@ func AddAttacks(db *sql.DB) {
 	}
 	defer statement.Close()
 
-	var attacks = Attacks{}
+	var attacks = Attack{}
 	fmt.Println("Enter a name")
 	fmt.Scan(&attacks.Name)
 	fmt.Println("Enter power")
@@ -37,14 +37,14 @@ func AddAttacks(db *sql.DB) {
 }
 
 func ShowAttacks(db *sql.DB) {
-	var rows, err = db.Query("SELECT id_attack, name, power, defense, speed FROM attacks")
+	var rows, err = db.Query("SELECT id, name, power, defense, speed FROM attacks")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
-	var attacks = Attacks{}
-	fmt.Printf("|%-9s|%-15s|%-15s|%-15s|%-15s|\n", "id_attack", "Name", "Power", "defense", "Speed")
+	var attacks = Attack{}
+	fmt.Printf("|%-9s|%-15s|%-15s|%-15s|%-15s|\n", "id", "Name", "Power", "defense", "Speed")
 	fmt.Println("___________________________________________________________________________")
 	for rows.Next() {
 		rows.Scan(&attacks.Id, &attacks.Name, &attacks.Power, &attacks.Defense, &attacks.Speed)
@@ -53,13 +53,13 @@ func ShowAttacks(db *sql.DB) {
 }
 
 func UpdateAttacks(db *sql.DB) int64 {
-	var statement, err = db.Prepare("UPDATE attacks SET name = ? WHERE id_attack = ?")
+	var statement, err = db.Prepare("UPDATE attacks SET name = ? WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer statement.Close()
 
-	var attacks = Attacks{}
+	var attacks = Attack{}
 	fmt.Println("Enter id")
 	fmt.Scan(&attacks.Id)
 	fmt.Println("Enter name to update")
@@ -72,13 +72,13 @@ func UpdateAttacks(db *sql.DB) int64 {
 }
 
 func DeleteAttacks(db *sql.DB) int64 {
-	var statement, err = db.Prepare("DELETE from attacks WHERE id_attack = ?")
+	var statement, err = db.Prepare("DELETE from attacks WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer statement.Close()
 
-	var attacks = Attacks{}
+	var attacks = Attack{}
 	fmt.Println("Enter id")
 	fmt.Scan(&attacks.Id)
 	var res, _ = statement.Exec(attacks.Id)
@@ -87,9 +87,9 @@ func DeleteAttacks(db *sql.DB) int64 {
 	return n
 }
 
-func SearchAttacks(db *sql.DB, id int) (attacks *Attacks, err error) {
-	var aux Attacks
-	var row = db.QueryRow("SELECT id_attack, name, power, defense, speed FROM attacks WHERE id_attack = ?", id)
+func SearchAttacks(db *sql.DB, id int) (attacks *Attack, err error) {
+	var aux Attack
+	var row = db.QueryRow("SELECT id, name, power, defense, speed FROM attacks WHERE id = ?", id)
 	err = row.Scan(&aux.Id, &aux.Name, &aux.Power, &aux.Defense, &aux.Speed)
 	if err != nil {
 		return

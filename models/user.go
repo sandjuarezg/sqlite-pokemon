@@ -59,21 +59,21 @@ func AddUser(db *sql.DB) {
 			exit = true
 		default:
 			fmt.Println("Option not valid")
-			function.CleanConsole()
+			function.CleanConsole(2)
 		}
 	}
 	statement.Exec(user.Name, user.Pass, user.Ocupa)
 }
 
 func ShowUser(db *sql.DB) {
-	var rows, err = db.Query("SELECT id_user, name, password, ocupation FROM users")
+	var rows, err = db.Query("SELECT id, name, password, ocupation FROM users")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer rows.Close()
 
 	var user = User{}
-	fmt.Printf("|%-7s|%-15s|%-15s|%-15s|\n", "id_user", "Name", "Password", "Ocupation")
+	fmt.Printf("|%-7s|%-15s|%-15s|%-15s|\n", "id", "Name", "Password", "Ocupation")
 	fmt.Println("________________________________________________________")
 	for rows.Next() {
 		rows.Scan(&user.Id, &user.Name, &user.Pass, &user.Ocupa)
@@ -82,7 +82,7 @@ func ShowUser(db *sql.DB) {
 }
 
 func UpdateUser(db *sql.DB) int64 {
-	var statement, err = db.Prepare("UPDATE users SET password = ? WHERE id_user = ?")
+	var statement, err = db.Prepare("UPDATE users SET password = ? WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func UpdateUser(db *sql.DB) int64 {
 }
 
 func DeleteUser(db *sql.DB) int64 {
-	var statement, err = db.Prepare("DELETE from users WHERE id_user = ?")
+	var statement, err = db.Prepare("DELETE from users WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -118,7 +118,7 @@ func DeleteUser(db *sql.DB) int64 {
 
 func SearchUser(db *sql.DB, id int) (user *User, err error) {
 	var aux User
-	var row = db.QueryRow("SELECT id_user, name, password, ocupation FROM users WHERE id_user = ?", id)
+	var row = db.QueryRow("SELECT id, name, password, ocupation FROM users WHERE id = ?", id)
 	err = row.Scan(&aux.Id, &aux.Name, &aux.Pass, &aux.Ocupa)
 	if err != nil {
 		return

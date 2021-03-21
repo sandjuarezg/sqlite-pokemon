@@ -11,10 +11,10 @@ import (
 	"time"
 )
 
-func CleanConsole() {
+func CleanConsole(d time.Duration) {
 	fmt.Println("Wait a second . . .")
 
-	time.Sleep(4 * time.Second)
+	time.Sleep(d * time.Second)
 	var cmd *exec.Cmd
 
 	if runtime.GOOS == "windows" {
@@ -67,20 +67,4 @@ func SqlMigration() {
 			log.Fatal(err)
 		}
 	}
-	/*
-
-		SELECT count(*) AS TOTALNUMBEROFTABLES FROM sqlite_master WHERE type = 'table'
-
-				//Check all tables (5)
-				if rows.Next() {
-					rows.Scan(&res)
-				}
-				if res != 5 {
-					fmt.Println("entra 2")
-					_, err = db.Exec(string(content))
-					if err != nil {
-						log.Fatal(err)
-					}
-				}
-	*/
 }
