@@ -14,7 +14,17 @@ CREATE TABLE IF NOT EXISTS pokemons(
 
 CREATE TABLE IF NOT EXISTS user_pokemon(
     id_user INTEGER NOT NULL, 
-    id_pokemon INTEGER NOT NULL
+    id_pokemon INTEGER NOT NULL,
+
+    FOREIGN KEY(id_user)
+        REFERENCES users (id)
+            ON UPDATE CASCADE
+            ON DELETE CASCADE,
+        
+    FOREIGN KEY (id_pokemon)
+        REFERENCES pokemons (id)
+            ON UPDATE CASCADE
+            ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS attacks(
@@ -27,7 +37,17 @@ CREATE TABLE IF NOT EXISTS attacks(
 
 CREATE TABLE IF NOT EXISTS pokemon_attack(
     id_pokemon INTEGER NOT NULL, 
-    id_attack INTEGER NOT NULL
+    id_attack INTEGER NOT NULL,
+    
+    FOREIGN KEY(id_pokemon)
+        REFERENCES pokemons (id)
+            ON UPDATE CASCADE
+            ON DELETE CASCADE,
+        
+    FOREIGN KEY (id_attack)
+        REFERENCES attacks (id)
+            ON UPDATE CASCADE
+            ON DELETE CASCADE
 );
 
 INSERT INTO users (name, password, ocupation) 
@@ -51,11 +71,11 @@ INSERT INTO user_pokemon (id_user, id_pokemon)
     VALUES
         (1,3),
         (3,7),
-        (1,4),
-        (2,1),
+        (1,4);
+        /*(2,1),
         (4,6),
         (2,2),
-        (3,5);
+        (3,5);*/
 
 INSERT INTO attacks (name, power, defense, speed) 
     VALUES
@@ -68,8 +88,8 @@ INSERT INTO pokemon_attack (id_pokemon, id_attack)
     VALUES
         (1,3),
         (3,4),
-        (1,4),
-        (2,1),
+        (1,4);
+        /*(2,1),
         (7,3),
-        (2,2);
+        (2,2);*/
         
