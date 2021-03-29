@@ -11,10 +11,10 @@ import (
 	"time"
 )
 
-func CleanConsole(d time.Duration) {
+func CleanConsole(second int) {
 	fmt.Println("Wait a second . . .")
 
-	time.Sleep(d * time.Second)
+	time.Sleep(time.Duration(second) * time.Second)
 	var cmd *exec.Cmd
 
 	if runtime.GOOS == "windows" {

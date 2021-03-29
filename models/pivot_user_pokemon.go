@@ -9,35 +9,37 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type User_pokemon struct {
+type UserPokemon struct {
 	Id_user    int
 	Id_pokemon int
 }
 
-func AddUserPokemon(db *sql.DB) error {
-	var user_pokemon = User_pokemon{}
+func AddUserPokemon(db *sql.DB) (err error) {
+	var user_pokemon = UserPokemon{}
 
 	fmt.Println("Enter user id")
 	fmt.Scan(&user_pokemon.Id_user)
-	var _, err = SearchUser(db, user_pokemon.Id_user)
+	_, err = SearchUser(db, user_pokemon.Id_user)
 	if err != nil {
-		return errors.New("No user found")
+		err = errors.New("No user found")
+		return
 	}
 
 	fmt.Println("Enter pokemon id")
 	fmt.Scan(&user_pokemon.Id_pokemon)
 	_, err = SearchPokemon(db, user_pokemon.Id_pokemon)
 	if err != nil {
-		return errors.New("No pokemon found")
+		err = errors.New("No pokemon found")
+		return
 	}
 
 	//Check not to repeat
-	var aux = User_pokemon{}
+	var aux = UserPokemon{}
 	var row = db.QueryRow("SELECT id_user, id_pokemon FROM user_pokemon WHERE id_user = ? AND id_pokemon = ?", user_pokemon.Id_user, user_pokemon.Id_pokemon)
 	err = row.Scan(&aux.Id_user, &aux.Id_pokemon)
 	if err != nil {
 		//If no data found, then I can insert
-		statement, err := db.Prepare("INSERT INTO user_pokemon (id_user, id_pokemon) VALUES (?, ?)")
+		var statement, err = db.Prepare("INSERT INTO user_pokemon (id_user, id_pokemon) VALUES (?, ?)")
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -45,7 +47,8 @@ func AddUserPokemon(db *sql.DB) error {
 		statement.Exec(user_pokemon.Id_user, user_pokemon.Id_pokemon)
 		return nil
 	}
-	return errors.New("The user already has this pokemon")
+	err = errors.New("The user already has this pokemon")
+	return
 }
 
 func ShowUserPokemonAll(db *sql.DB) {
@@ -55,29 +58,42 @@ func ShowUserPokemonAll(db *sql.DB) {
 	}
 	defer rows.Close()
 
-	var user_pokemon = User_pokemon{}
+	var user_pokemon = UserPokemon{}
 	fmt.Printf("|%-7s|%-15s|%-10s|%-15s|%-10s|%-10s|%-10s|%-10s|\n", "id_user", "Name", "Password", "Ocupation", "id_pokemon", "Name", "Type", "Level")
 	fmt.Println("_________________________________________________________________________________________")
 	for rows.Next() {
 		rows.Scan(&user_pokemon.Id_user, &user_pokemon.Id_pokemon)
-		var user, _ = SearchUser(db, user_pokemon.Id_user)
-		var pokemon, _ = SearchPokemon(db, user_pokemon.Id_pokemon)
+		if err != nil {
+			log.Fatal(err)
+		}
+		user, err := SearchUser(db, user_pokemon.Id_user)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pokemon, err := SearchPokemon(db, user_pokemon.Id_pokemon)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		fmt.Printf("|%-7d|%-15s|%-10s|%-15s|%-10d|%-10s|%-10s|%-10d|\n", user.Id, user.Name, user.Pass, user.Ocupa, pokemon.Id, pokemon.Name, pokemon.Type, pokemon.Level)
 	}
 }
 
-func ShowUserPokemonSpecific(db *sql.DB) error {
-	var user_pokemon = User_pokemon{}
+func ShowUserPokemonSpecific(db *sql.DB) (err error) {
+	var user_pokemon = UserPokemon{}
 	fmt.Println("Enter user id")
 	fmt.Scan(&user_pokemon.Id_user)
 
-	var row, err = db.Query("SELECT id_pokemon FROM user_pokemon WHERE id_user = ?", user_pokemon.Id_user)
+	row, err := db.Query("SELECT id_pokemon FROM user_pokemon WHERE id_user = ?", user_pokemon.Id_user)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer row.Close()
-	var user, _ = SearchUser(db, user_pokemon.Id_user)
+	user, err := SearchUser(db, user_pokemon.Id_user)
+	if err != nil {
+		err = errors.New("User not found")
+		return
+	}
 
 	fmt.Printf("ID: %d, Name: %s, Password: %s, Ocupation: %s\n", user.Id, user.Name, user.Pass, user.Ocupa)
 	fmt.Printf("|%-10s|%-10s|%-10s|%-10s|\n", "id_pokemon", "Name", "Type", "Level")
@@ -85,29 +101,33 @@ func ShowUserPokemonSpecific(db *sql.DB) error {
 	for row.Next() {
 		err = row.Scan(&user_pokemon.Id_pokemon)
 		if err != nil {
-			return errors.New("User without pokemons")
+			err = errors.New("User without pokemons")
+			return
 		}
-		pokemon, _ := SearchPokemon(db, user_pokemon.Id_pokemon)
+		pokemon, err := SearchPokemon(db, user_pokemon.Id_pokemon)
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Printf("|%-10d|%-10s|%-10s|%-10d|\n", pokemon.Id, pokemon.Name, pokemon.Type, pokemon.Level)
 	}
-	return nil
+	return
 }
 
-func DeleteUserPokemon(db *sql.DB) int64 {
+func DeleteUserPokemon(db *sql.DB) (n int64) {
 	var statement, err = db.Prepare("DELETE from user_pokemon WHERE id_user = ? AND id_pokemon = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer statement.Close()
 
-	var user_pokemon = User_pokemon{}
+	var user_pokemon = UserPokemon{}
 	fmt.Println("Enter user id")
 	fmt.Scan(&user_pokemon.Id_user)
 	fmt.Println("Enter pokemon id")
 	fmt.Scan(&user_pokemon.Id_pokemon)
 
 	var res, _ = statement.Exec(user_pokemon.Id_user, user_pokemon.Id_user)
-	var n, _ = res.RowsAffected()
+	n, _ = res.RowsAffected()
 
-	return n
+	return
 }

@@ -17,7 +17,7 @@ type Attack struct {
 }
 
 func AddAttacks(db *sql.DB) {
-	statement, err := db.Prepare("INSERT INTO attacks (name, power, defense, speed) VALUES (?, ?, ?, ?)")
+	var statement, err = db.Prepare("INSERT INTO attacks (name, power, defense, speed) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -47,12 +47,15 @@ func ShowAttacks(db *sql.DB) {
 	fmt.Printf("|%-9s|%-15s|%-15s|%-15s|%-15s|\n", "id", "Name", "Power", "defense", "Speed")
 	fmt.Println("___________________________________________________________________________")
 	for rows.Next() {
-		rows.Scan(&attacks.Id, &attacks.Name, &attacks.Power, &attacks.Defense, &attacks.Speed)
+		err = rows.Scan(&attacks.Id, &attacks.Name, &attacks.Power, &attacks.Defense, &attacks.Speed)
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Printf("|%-9d|%-15s|%-15d|%-15d|%-15d|\n", attacks.Id, attacks.Name, attacks.Power, attacks.Defense, attacks.Speed)
 	}
 }
 
-func UpdateAttacks(db *sql.DB) int64 {
+func UpdateAttacks(db *sql.DB) (n int64) {
 	var statement, err = db.Prepare("UPDATE attacks SET name = ? WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
@@ -66,12 +69,12 @@ func UpdateAttacks(db *sql.DB) int64 {
 	fmt.Scan(&attacks.Name)
 
 	var res, _ = statement.Exec(attacks.Name, attacks.Id)
-	var n, _ = res.RowsAffected()
+	n, _ = res.RowsAffected()
 
-	return n
+	return
 }
 
-func DeleteAttacks(db *sql.DB) int64 {
+func DeleteAttacks(db *sql.DB) (n int64) {
 	var statement, err = db.Prepare("DELETE from attacks WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
@@ -82,12 +85,12 @@ func DeleteAttacks(db *sql.DB) int64 {
 	fmt.Println("Enter id")
 	fmt.Scan(&attacks.Id)
 	var res, _ = statement.Exec(attacks.Id)
-	var n, _ = res.RowsAffected()
+	n, _ = res.RowsAffected()
 
-	return n
+	return
 }
 
-func SearchAttacks(db *sql.DB, id int) (attacks *Attack, err error) {
+func SearchAttack(db *sql.DB, id int) (attacks *Attack, err error) {
 	var aux Attack
 	var row = db.QueryRow("SELECT id, name, power, defense, speed FROM attacks WHERE id = ?", id)
 	err = row.Scan(&aux.Id, &aux.Name, &aux.Power, &aux.Defense, &aux.Speed)

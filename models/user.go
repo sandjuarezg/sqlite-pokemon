@@ -17,7 +17,7 @@ type User struct {
 }
 
 func AddUser(db *sql.DB) {
-	statement, err := db.Prepare("INSERT INTO users (name, password, ocupation) VALUES (?, ?, ?)")
+	var statement, err = db.Prepare("INSERT INTO users (name, password, ocupation) VALUES (?, ?, ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -76,12 +76,15 @@ func ShowUser(db *sql.DB) {
 	fmt.Printf("|%-7s|%-15s|%-15s|%-15s|\n", "id", "Name", "Password", "Ocupation")
 	fmt.Println("________________________________________________________")
 	for rows.Next() {
-		rows.Scan(&user.Id, &user.Name, &user.Pass, &user.Ocupa)
+		err = rows.Scan(&user.Id, &user.Name, &user.Pass, &user.Ocupa)
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Printf("|%-7d|%-15s|%-15s|%-15s|\n", user.Id, user.Name, user.Pass, user.Ocupa)
 	}
 }
 
-func UpdateUser(db *sql.DB) int64 {
+func UpdateUser(db *sql.DB) (n int64) {
 	var statement, err = db.Prepare("UPDATE users SET password = ? WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
@@ -95,12 +98,12 @@ func UpdateUser(db *sql.DB) int64 {
 	fmt.Scan(&user.Pass)
 
 	var res, _ = statement.Exec(user.Pass, user.Id)
-	var n, _ = res.RowsAffected()
+	n, _ = res.RowsAffected()
 
-	return n
+	return
 }
 
-func DeleteUser(db *sql.DB) int64 {
+func DeleteUser(db *sql.DB) (n int64) {
 	var statement, err = db.Prepare("DELETE from users WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
@@ -111,9 +114,9 @@ func DeleteUser(db *sql.DB) int64 {
 	fmt.Println("Enter id")
 	fmt.Scan(&user.Id)
 	var res, _ = statement.Exec(user.Id)
-	var n, _ = res.RowsAffected()
+	n, _ = res.RowsAffected()
 
-	return n
+	return
 }
 
 func SearchUser(db *sql.DB, id int) (user *User, err error) {

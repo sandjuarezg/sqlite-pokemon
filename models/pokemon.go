@@ -17,7 +17,7 @@ type Pokemon struct {
 }
 
 func AddPokemon(db *sql.DB) {
-	statement, err := db.Prepare("INSERT INTO pokemons (name, type, level) VALUES (?, ?, ?)")
+	var statement, err = db.Prepare("INSERT INTO pokemons (name, type, level) VALUES (?, ?, ?)")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -79,7 +79,7 @@ func AddPokemon(db *sql.DB) {
 }
 
 func ShowPokemon(db *sql.DB) {
-	rows, err := db.Query("SELECT id, name, type, level FROM pokemons")
+	var rows, err = db.Query("SELECT id, name, type, level FROM pokemons")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -89,13 +89,16 @@ func ShowPokemon(db *sql.DB) {
 	fmt.Printf("|%-7s|%-15s|%-15s|%-7s|\n", "id", "Name", "Type", "Level")
 	fmt.Println("________________________________________________")
 	for rows.Next() {
-		rows.Scan(&poke.Id, &poke.Name, &poke.Type, &poke.Level)
+		err = rows.Scan(&poke.Id, &poke.Name, &poke.Type, &poke.Level)
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Printf("|%-7d|%-15s|%-15s|%-7d|\n", poke.Id, poke.Name, poke.Type, poke.Level)
 	}
 }
 
-func UpdatePokemon(db *sql.DB) int64 {
-	statement, err := db.Prepare("UPDATE pokemons SET level = ? WHERE id = ?")
+func UpdatePokemon(db *sql.DB) (n int64) {
+	var statement, err = db.Prepare("UPDATE pokemons SET level = ? WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -108,12 +111,12 @@ func UpdatePokemon(db *sql.DB) int64 {
 	fmt.Scan(&poke.Level)
 
 	var res, _ = statement.Exec(poke.Level, poke.Id)
-	var n, _ = res.RowsAffected()
+	n, _ = res.RowsAffected()
 
-	return n
+	return
 }
 
-func DeletePokemon(db *sql.DB) int64 {
+func DeletePokemon(db *sql.DB) (n int64) {
 	var statement, err = db.Prepare("DELETE from pokemons WHERE id = ?")
 	if err != nil {
 		log.Fatal(err)
@@ -124,9 +127,9 @@ func DeletePokemon(db *sql.DB) int64 {
 	fmt.Println("Enter id")
 	fmt.Scan(&poke.Id)
 	var res, _ = statement.Exec(poke.Id)
-	var n, _ = res.RowsAffected()
+	n, _ = res.RowsAffected()
 
-	return n
+	return
 }
 
 func SearchPokemon(db *sql.DB, id int) (pokemon *Pokemon, err error) {

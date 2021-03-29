@@ -9,30 +9,32 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-type Pokemon_attack struct {
+type PokemonAttack struct {
 	Id_pokemon int
 	Id_attack  int
 }
 
-func AddPokemonAttack(db *sql.DB) error {
-	var pokemon_attack = Pokemon_attack{}
+func AddPokemonAttack(db *sql.DB) (err error) {
+	var pokemon_attack = PokemonAttack{}
 
 	fmt.Println("Enter pokemon id")
 	fmt.Scan(&pokemon_attack.Id_pokemon)
-	var _, err = SearchPokemon(db, pokemon_attack.Id_pokemon)
+	_, err = SearchPokemon(db, pokemon_attack.Id_pokemon)
 	if err != nil {
-		return errors.New("No pokemon found")
+		err = errors.New("No pokemon found")
+		return
 	}
 
 	fmt.Println("Enter attack id")
 	fmt.Scan(&pokemon_attack.Id_attack)
-	_, err = SearchAttacks(db, pokemon_attack.Id_attack)
+	_, err = SearchAttack(db, pokemon_attack.Id_attack)
 	if err != nil {
-		return errors.New("No attack found")
+		err = errors.New("No attack found")
+		return
 	}
 
 	//Check not to repeat
-	var aux = Pokemon_attack{}
+	var aux = PokemonAttack{}
 	var row = db.QueryRow("SELECT id_pokemon, id_attack FROM pokemon_attack WHERE id_pokemon = ? AND id_attack = ?", pokemon_attack.Id_pokemon, pokemon_attack.Id_attack)
 	err = row.Scan(&aux.Id_pokemon, &aux.Id_attack)
 	if err != nil {
@@ -45,7 +47,8 @@ func AddPokemonAttack(db *sql.DB) error {
 		statement.Exec(pokemon_attack.Id_pokemon, pokemon_attack.Id_attack)
 		return nil
 	}
-	return errors.New("The pokemon already has this attack")
+	err = errors.New("The pokemon already has this attack")
+	return
 }
 
 func ShowPokemonAttackAll(db *sql.DB) {
@@ -55,29 +58,41 @@ func ShowPokemonAttackAll(db *sql.DB) {
 	}
 	defer rows.Close()
 
-	var pokemon_attack = Pokemon_attack{}
+	var pokemon_attack = PokemonAttack{}
 	fmt.Printf("|%-10s|%-10s|%-10s|%-10s|%-10s|%-12s|%-10s|%-10s|%-10s|\n", "id_pokemon", "Name", "Type", "Level", "id_attack", "Name", "Power", "Defense", "Seep")
 	fmt.Println("______________________________________________________________________________________________________")
 	for rows.Next() {
 		rows.Scan(&pokemon_attack.Id_pokemon, &pokemon_attack.Id_attack)
-		var pokemon, _ = SearchPokemon(db, pokemon_attack.Id_pokemon)
-		var attack, _ = SearchAttacks(db, pokemon_attack.Id_attack)
+		if err != nil {
+			log.Fatal(err)
+		}
+		pokemon, err := SearchPokemon(db, pokemon_attack.Id_pokemon)
+		if err != nil {
+			log.Fatal(err)
+		}
+		attack, err := SearchAttack(db, pokemon_attack.Id_attack)
+		if err != nil {
+			log.Fatal(err)
+		}
 
 		fmt.Printf("|%-10d|%-10s|%-10s|%-10d|%-10d|%-12s|%-10d|%-10d|%-10d|\n", pokemon.Id, pokemon.Name, pokemon.Type, pokemon.Level, attack.Id, attack.Name, attack.Power, attack.Defense, attack.Speed)
 	}
 }
 
-func ShowPokemonAttackSpecific(db *sql.DB) error {
-	var pokemon_attack = Pokemon_attack{}
+func ShowPokemonAttackSpecific(db *sql.DB) (err error) {
+	var pokemon_attack = PokemonAttack{}
 	fmt.Println("Enter pokemon id")
 	fmt.Scan(&pokemon_attack.Id_pokemon)
 
-	var row, err = db.Query("SELECT id_attack FROM pokemon_attack WHERE id_pokemon = ?", pokemon_attack.Id_pokemon)
+	row, err := db.Query("SELECT id_attack FROM pokemon_attack WHERE id_pokemon = ?", pokemon_attack.Id_pokemon)
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer row.Close()
-	var pokemon, _ = SearchPokemon(db, pokemon_attack.Id_pokemon)
+	pokemon, err := SearchPokemon(db, pokemon_attack.Id_pokemon)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	fmt.Printf("ID: %d, Name: %s, Type: %s, Level: %d\n", pokemon.Id, pokemon.Name, pokemon.Type, pokemon.Level)
 	fmt.Printf("|%-10s|%-10s|%-10s|%-10s|%-10s|\n", "id_attack", "Name", "Power", "Defense", "Speed")
@@ -85,29 +100,33 @@ func ShowPokemonAttackSpecific(db *sql.DB) error {
 	for row.Next() {
 		err = row.Scan(&pokemon_attack.Id_attack)
 		if err != nil {
-			return errors.New("Pokemon without attacks")
+			err = errors.New("Pokemon without attacks")
+			return
 		}
-		var attack, _ = SearchAttacks(db, pokemon_attack.Id_attack)
+		attack, err := SearchAttack(db, pokemon_attack.Id_attack)
+		if err != nil {
+			log.Fatal(err)
+		}
 		fmt.Printf("|%-10d|%-10s|%-10d|%-10d|%-10d|\n", attack.Id, attack.Name, attack.Power, attack.Defense, attack.Speed)
 	}
-	return nil
+	return
 }
 
-func DeletePokemonAttack(db *sql.DB) int64 {
+func DeletePokemonAttack(db *sql.DB) (n int64) {
 	var statement, err = db.Prepare("DELETE from pokemon_attack WHERE id_pokemon = ? AND id_attack = ?")
 	if err != nil {
 		log.Fatal(err)
 	}
 	defer statement.Close()
 
-	var pokemon_attack = Pokemon_attack{}
+	var pokemon_attack = PokemonAttack{}
 	fmt.Println("Enter pokemon id")
 	fmt.Scan(&pokemon_attack.Id_pokemon)
 	fmt.Println("Enter attack id")
 	fmt.Scan(&pokemon_attack.Id_attack)
 
 	var res, _ = statement.Exec(pokemon_attack.Id_pokemon, pokemon_attack.Id_attack)
-	var n, _ = res.RowsAffected()
+	n, _ = res.RowsAffected()
 
-	return n
+	return
 }
