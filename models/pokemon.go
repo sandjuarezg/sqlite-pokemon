@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sandjuarezg/sqlite-pokemon/function"
@@ -16,10 +15,11 @@ type Pokemon struct {
 	Level int
 }
 
-func AddPokemon(db *sql.DB) {
-	var statement, err = db.Prepare("INSERT INTO pokemons (name, type, level) VALUES (?, ?, ?)")
+func AddPokemon(db *sql.DB) (err error) {
+	statement, err := db.Prepare("INSERT INTO pokemons (name, type, level) VALUES (?, ?, ?)")
 	if err != nil {
-		log.Fatal(err)
+		err = function.ErrInsert
+		return
 	}
 	defer statement.Close()
 
@@ -76,12 +76,15 @@ func AddPokemon(db *sql.DB) {
 	fmt.Println("Enter a lever")
 	fmt.Scan(&poke.Level)
 	statement.Exec(poke.Name, poke.Type, poke.Level)
+
+	return
 }
 
-func ShowPokemon(db *sql.DB) {
-	var rows, err = db.Query("SELECT id, name, type, level FROM pokemons")
+func ShowPokemon(db *sql.DB) (err error) {
+	rows, err := db.Query("SELECT id, name, type, level FROM pokemons")
 	if err != nil {
-		log.Fatal(err)
+		err = function.ErrShowData
+		return
 	}
 	defer rows.Close()
 
@@ -91,16 +94,19 @@ func ShowPokemon(db *sql.DB) {
 	for rows.Next() {
 		err = rows.Scan(&poke.Id, &poke.Name, &poke.Type, &poke.Level)
 		if err != nil {
-			log.Fatal(err)
+			err = function.ErrScan
+			return
 		}
 		fmt.Printf("|%-7d|%-15s|%-15s|%-7d|\n", poke.Id, poke.Name, poke.Type, poke.Level)
 	}
+	return
 }
 
-func UpdatePokemon(db *sql.DB) (n int64) {
-	var statement, err = db.Prepare("UPDATE pokemons SET level = ? WHERE id = ?")
+func UpdatePokemon(db *sql.DB) (n int64, err error) {
+	statement, err := db.Prepare("UPDATE pokemons SET level = ? WHERE id = ?")
 	if err != nil {
-		log.Fatal(err)
+		err = function.ErrUpdate
+		return
 	}
 	defer statement.Close()
 
@@ -116,10 +122,11 @@ func UpdatePokemon(db *sql.DB) (n int64) {
 	return
 }
 
-func DeletePokemon(db *sql.DB) (n int64) {
-	var statement, err = db.Prepare("DELETE from pokemons WHERE id = ?")
+func DeletePokemon(db *sql.DB) (n int64, err error) {
+	statement, err := db.Prepare("DELETE from pokemons WHERE id = ?")
 	if err != nil {
-		log.Fatal(err)
+		err = function.ErrDelete
+		return
 	}
 	defer statement.Close()
 
@@ -137,6 +144,7 @@ func SearchPokemon(db *sql.DB, id int) (pokemon *Pokemon, err error) {
 	var row = db.QueryRow("SELECT id, name, type, level FROM pokemons WHERE id = ?", id)
 	err = row.Scan(&aux.Id, &aux.Name, &aux.Type, &aux.Level)
 	if err != nil {
+		err = function.ErrScan
 		return
 	}
 	pokemon = &aux

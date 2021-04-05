@@ -55,13 +55,22 @@ func main() {
 					back = true
 					function.CleanConsole(2)
 				case 1:
-					models.AddUser(db)
+					var err = models.AddUser(db)
+					if err != nil {
+						fmt.Println(err)
+					}
 					function.CleanConsole(1)
 				case 2:
-					models.AddPokemon(db)
+					var err = models.AddPokemon(db)
+					if err != nil {
+						fmt.Println(err)
+					}
 					function.CleanConsole(1)
 				case 3:
-					models.AddAttacks(db)
+					var err = models.AddAttack(db)
+					if err != nil {
+						fmt.Println(err)
+					}
 					function.CleanConsole(1)
 				default:
 					fmt.Println("Option not valid")
@@ -86,13 +95,22 @@ func main() {
 					back = true
 					function.CleanConsole(2)
 				case 1:
-					models.ShowUser(db)
+					var err = models.ShowUser(db)
+					if err != nil {
+						fmt.Println(err)
+					}
 					function.CleanConsole(4)
 				case 2:
-					models.ShowPokemon(db)
+					var err = models.ShowPokemon(db)
+					if err != nil {
+						fmt.Println(err)
+					}
 					function.CleanConsole(4)
 				case 3:
-					models.ShowAttacks(db)
+					var err = models.ShowAttacks(db)
+					if err != nil {
+						fmt.Println(err)
+					}
 					function.CleanConsole(4)
 				default:
 					fmt.Println("Option not valid")
@@ -117,21 +135,30 @@ func main() {
 					back = true
 					function.CleanConsole(2)
 				case 1:
-					var n = models.UpdateUser(db)
+					var n, err = models.UpdateUser(db)
 					if n == 0 {
 						fmt.Println("Problem: Not found id")
+					}
+					if err != nil {
+						fmt.Println(err)
 					}
 					function.CleanConsole(2)
 				case 2:
-					var n = models.UpdatePokemon(db)
+					var n, err = models.UpdatePokemon(db)
 					if n == 0 {
 						fmt.Println("Problem: Not found id")
 					}
+					if err != nil {
+						fmt.Println(err)
+					}
 					function.CleanConsole(2)
 				case 3:
-					var n = models.UpdateAttacks(db)
+					var n, err = models.UpdateAttacks(db)
 					if n == 0 {
 						fmt.Println("Problem: Not found id")
+					}
+					if err != nil {
+						fmt.Println(err)
 					}
 					function.CleanConsole(2)
 				default:
@@ -157,21 +184,30 @@ func main() {
 					back = true
 					function.CleanConsole(2)
 				case 1:
-					var n = models.DeleteUser(db)
+					var n, err = models.DeleteUser(db)
 					if n == 0 {
 						fmt.Println("Problem: Not found id")
+					}
+					if err != nil {
+						fmt.Println(err)
 					}
 					function.CleanConsole(2)
 				case 2:
-					var n = models.DeletePokemon(db)
+					var n, err = models.DeletePokemon(db)
 					if n == 0 {
 						fmt.Println("Problem: Not found id")
 					}
+					if err != nil {
+						fmt.Println(err)
+					}
 					function.CleanConsole(2)
 				case 3:
-					var n = models.DeleteAttacks(db)
+					var n, err = models.DeleteAttacks(db)
 					if n == 0 {
 						fmt.Println("Problem: Not found id")
+					}
+					if err != nil {
+						fmt.Println(err)
 					}
 					function.CleanConsole(2)
 				default:
@@ -214,11 +250,14 @@ func main() {
 						case 1:
 							var err = models.AddUserPokemon(db)
 							if err != nil {
-								fmt.Println("Problem:", err)
+								fmt.Println(err)
 							}
 							function.CleanConsole(2)
 						case 2:
-							models.ShowUserPokemonAll(db)
+							var err = models.ShowUserPokemonAll(db)
+							if err != nil {
+								fmt.Println(err)
+							}
 							function.CleanConsole(4)
 						case 3:
 							var err = models.ShowUserPokemonSpecific(db)
@@ -227,9 +266,12 @@ func main() {
 							}
 							function.CleanConsole(4)
 						case 4:
-							var n = models.DeleteUserPokemon(db)
+							var n, err = models.DeleteUserPokemon(db)
 							if n == 0 {
 								fmt.Println("Problem: Not found id")
+							}
+							if err != nil {
+								fmt.Println(err)
 							}
 							function.CleanConsole(2)
 						default:
@@ -258,11 +300,14 @@ func main() {
 						case 1:
 							var err = models.AddPokemonAttack(db)
 							if err != nil {
-								fmt.Println("Problem:", err)
+								fmt.Println(err)
 							}
 							function.CleanConsole(2)
 						case 2:
-							models.ShowPokemonAttackAll(db)
+							var err = models.ShowPokemonAttackAll(db)
+							if err != nil {
+								fmt.Println(err)
+							}
 							function.CleanConsole(4)
 						case 3:
 							var err = models.ShowPokemonAttackSpecific(db)
@@ -271,9 +316,12 @@ func main() {
 							}
 							function.CleanConsole(4)
 						case 4:
-							var n = models.DeletePokemonAttack(db)
+							var n, err = models.DeletePokemonAttack(db)
 							if n == 0 {
 								fmt.Println("Problem: Not found id")
+							}
+							if err != nil {
+								fmt.Println(err)
 							}
 							function.CleanConsole(2)
 						default:

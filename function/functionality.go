@@ -2,6 +2,7 @@ package function
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -9,6 +10,16 @@ import (
 	"os/exec"
 	"runtime"
 	"time"
+)
+
+var (
+	ErrInsert    = errors.New("Problem: error to insert")
+	ErrShowData  = errors.New("Problem: error to show data")
+	ErrUpdate    = errors.New("Problem: error to update")
+	ErrDelete    = errors.New("Problem: error to delete")
+	ErrScan      = errors.New("Problem: error to scan rows")
+	ErrUnknown   = errors.New("Problem: Unknown data")
+	ErrDuplicate = errors.New("Problem: Duplicate data")
 )
 
 func CleanConsole(second int) {

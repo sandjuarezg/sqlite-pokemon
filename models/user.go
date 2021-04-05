@@ -3,7 +3,6 @@ package models
 import (
 	"database/sql"
 	"fmt"
-	"log"
 
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/sandjuarezg/sqlite-pokemon/function"
@@ -16,10 +15,11 @@ type User struct {
 	Ocupa string
 }
 
-func AddUser(db *sql.DB) {
-	var statement, err = db.Prepare("INSERT INTO users (name, password, ocupation) VALUES (?, ?, ?)")
+func AddUser(db *sql.DB) (err error) {
+	statement, err := db.Prepare("INSERT INTO users (name, password, ocupation) VALUES (?, ?, ?)")
 	if err != nil {
-		log.Fatal(err)
+		err = function.ErrInsert
+		return
 	}
 	defer statement.Close()
 
@@ -63,12 +63,15 @@ func AddUser(db *sql.DB) {
 		}
 	}
 	statement.Exec(user.Name, user.Pass, user.Ocupa)
+
+	return
 }
 
-func ShowUser(db *sql.DB) {
-	var rows, err = db.Query("SELECT id, name, password, ocupation FROM users")
+func ShowUser(db *sql.DB) (err error) {
+	rows, err := db.Query("SELECT id, name, password, ocupation FROM users")
 	if err != nil {
-		log.Fatal(err)
+		err = function.ErrShowData
+		return
 	}
 	defer rows.Close()
 
@@ -78,16 +81,20 @@ func ShowUser(db *sql.DB) {
 	for rows.Next() {
 		err = rows.Scan(&user.Id, &user.Name, &user.Pass, &user.Ocupa)
 		if err != nil {
-			log.Fatal(err)
+			err = function.ErrScan
+			return
 		}
 		fmt.Printf("|%-7d|%-15s|%-15s|%-15s|\n", user.Id, user.Name, user.Pass, user.Ocupa)
 	}
+
+	return
 }
 
-func UpdateUser(db *sql.DB) (n int64) {
-	var statement, err = db.Prepare("UPDATE users SET password = ? WHERE id = ?")
+func UpdateUser(db *sql.DB) (n int64, err error) {
+	statement, err := db.Prepare("UPDATE users SET password = ? WHERE id = ?")
 	if err != nil {
-		log.Fatal(err)
+		err = function.ErrUpdate
+		return
 	}
 	defer statement.Close()
 
@@ -103,10 +110,11 @@ func UpdateUser(db *sql.DB) (n int64) {
 	return
 }
 
-func DeleteUser(db *sql.DB) (n int64) {
-	var statement, err = db.Prepare("DELETE from users WHERE id = ?")
+func DeleteUser(db *sql.DB) (n int64, err error) {
+	statement, err := db.Prepare("DELETE from users WHERE id = ?")
 	if err != nil {
-		log.Fatal(err)
+		err = function.ErrDelete
+		return
 	}
 	defer statement.Close()
 
@@ -124,6 +132,7 @@ func SearchUser(db *sql.DB, id int) (user *User, err error) {
 	var row = db.QueryRow("SELECT id, name, password, ocupation FROM users WHERE id = ?", id)
 	err = row.Scan(&aux.Id, &aux.Name, &aux.Pass, &aux.Ocupa)
 	if err != nil {
+		err = function.ErrScan
 		return
 	}
 	user = &aux

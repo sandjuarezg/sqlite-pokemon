@@ -2,59 +2,78 @@ package models
 
 import (
 	"database/sql"
-	"errors"
 	"fmt"
-	"log"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/sandjuarezg/sqlite-pokemon/function"
 )
 
 type PokemonAttack struct {
-	Id_pokemon int
-	Id_attack  int
+	IdPokemon int
+	IdAttack  int
 }
 
 func AddPokemonAttack(db *sql.DB) (err error) {
 	var pokemon_attack = PokemonAttack{}
+	statement, err := db.Prepare("INSERT INTO pokemon_attack (id_pokemon, id_attack) VALUES (?, ?)")
+	if err != nil {
+		err = function.ErrInsert
+		return
+	}
+	defer statement.Close()
 
 	fmt.Println("Enter pokemon id")
-	fmt.Scan(&pokemon_attack.Id_pokemon)
-	_, err = SearchPokemon(db, pokemon_attack.Id_pokemon)
+	fmt.Scan(&pokemon_attack.IdPokemon)
+	_, err = SearchPokemon(db, pokemon_attack.IdPokemon)
 	if err != nil {
-		err = errors.New("No pokemon found")
+		err = function.ErrUnknown
 		return
 	}
 
 	fmt.Println("Enter attack id")
-	fmt.Scan(&pokemon_attack.Id_attack)
-	_, err = SearchAttack(db, pokemon_attack.Id_attack)
+	fmt.Scan(&pokemon_attack.IdAttack)
+	_, err = SearchAttacks(db, pokemon_attack.IdAttack)
 	if err != nil {
-		err = errors.New("No attack found")
+		err = function.ErrUnknown
 		return
 	}
 
 	//Check not to repeat
 	var aux = PokemonAttack{}
-	var row = db.QueryRow("SELECT id FROM pokemons INNER JOIN pokemon_attack ON pokemons.id = ? AND pokemon_attack.id_attack = ?", pokemon_attack.Id_pokemon, pokemon_attack.Id_attack)
-	err = row.Scan(&aux.Id_pokemon)
+	var row = db.QueryRow(`
+		SELECT 
+			pokemons.id 
+			FROM 
+				pokemon_attack 
+			INNER JOIN pokemons ON pokemon_attack.id_pokemon = pokemons.id
+			WHERE 
+				pokemons.id = ? AND pokemon_attack.id_attack = ?
+		`, pokemon_attack.IdPokemon, pokemon_attack.IdAttack)
+	err = row.Scan(&aux.IdPokemon)
 	if err != nil {
 		//If no data found, then I can insert
-		statement, err := db.Prepare("INSERT INTO pokemon_attack (id_pokemon, id_attack) VALUES (?, ?)")
-		if err != nil {
-			log.Fatal(err)
-		}
-		defer statement.Close()
-		statement.Exec(pokemon_attack.Id_pokemon, pokemon_attack.Id_attack)
-		return nil
+		statement.Exec(pokemon_attack.IdPokemon, pokemon_attack.IdAttack)
+		err = nil
+		return
 	}
-	err = errors.New("The pokemon already has this attack")
+	err = function.ErrDuplicate
 	return
 }
 
-func ShowPokemonAttackAll(db *sql.DB) {
-	var rows, err = db.Query("SELECT pokemons.id, pokemons.name, pokemons.type, pokemons.level, attacks.id, attacks.name, attacks.power, attacks.defense, attacks.speed FROM pokemons, attacks INNER JOIN pokemon_attack WHERE pokemons.id = pokemon_attack.id_pokemon AND attacks.id = pokemon_attack.id_attack ORDER BY pokemons.id ASC")
+func ShowPokemonAttackAll(db *sql.DB) (err error) {
+	rows, err := db.Query(`
+		SELECT 
+			pokemons.id, pokemons.name, pokemons.type, pokemons.level, attacks.id, attacks.name, attacks.power, attacks.defense, attacks.speed 
+			FROM 
+				pokemon_attack
+			INNER JOIN pokemons ON pokemons.id = pokemon_attack.id_pokemon 
+			INNER JOIN attacks ON attacks.id = pokemon_attack.id_attack 
+			ORDER BY 
+				pokemons.id ASC
+	`)
 	if err != nil {
-		log.Fatal(err)
+		err = function.ErrShowData
+		return
 	}
 	defer rows.Close()
 
@@ -65,20 +84,32 @@ func ShowPokemonAttackAll(db *sql.DB) {
 	for rows.Next() {
 		err = rows.Scan(&pokemon.Id, &pokemon.Name, &pokemon.Type, &pokemon.Level, &attack.Id, &attack.Name, &attack.Power, &attack.Defense, &attack.Speed)
 		if err != nil {
-			log.Fatal(err)
+			err = function.ErrScan
+			return
 		}
 		fmt.Printf("|%-10d|%-10s|%-10s|%-10d|%-10d|%-12s|%-10d|%-10d|%-10d|\n", pokemon.Id, pokemon.Name, pokemon.Type, pokemon.Level, attack.Id, attack.Name, attack.Power, attack.Defense, attack.Speed)
 	}
+	return
 }
 
 func ShowPokemonAttackSpecific(db *sql.DB) (err error) {
 	var pokemon_attack = PokemonAttack{}
 	fmt.Println("Enter pokemon id")
-	fmt.Scan(&pokemon_attack.Id_pokemon)
+	fmt.Scan(&pokemon_attack.IdPokemon)
 
-	row, err := db.Query("SELECT pokemons.id, pokemons.name, pokemons.type, pokemons.level, attacks.id, attacks.name, attacks.power, attacks.defense, attacks.speed FROM pokemons, attacks INNER JOIN pokemon_attack WHERE pokemon_attack.id_pokemon = ? AND pokemons.id = pokemon_attack.id_pokemon AND attacks.id = pokemon_attack.id_attack", pokemon_attack.Id_pokemon)
+	row, err := db.Query(`
+		SELECT 
+			pokemons.id, pokemons.name, pokemons.type, pokemons.level, attacks.id, attacks.name, attacks.power, attacks.defense, attacks.speed 
+			FROM 
+				pokemon_attack
+			INNER JOIN pokemons ON pokemons.id = pokemon_attack.id_pokemon 
+			INNER JOIN attacks ON attacks.id = pokemon_attack.id_attack
+			WHERE 
+				pokemon_attack.id_pokemon = ?
+		`, pokemon_attack.IdPokemon)
 	if err != nil {
-		log.Fatal(err)
+		err = function.ErrShowData
+		return
 	}
 	defer row.Close()
 
@@ -89,27 +120,29 @@ func ShowPokemonAttackSpecific(db *sql.DB) (err error) {
 	for row.Next() {
 		err = row.Scan(&pokemon.Id, &pokemon.Name, &pokemon.Type, &pokemon.Level, &attack.Id, &attack.Name, &attack.Power, &attack.Defense, &attack.Speed)
 		if err != nil {
-			log.Fatal(err)
+			err = function.ErrScan
+			return
 		}
 		fmt.Printf("|%-10d|%-10s|%-10s|%-10d|%-10d|%-12s|%-10d|%-10d|%-10d|\n", pokemon.Id, pokemon.Name, pokemon.Type, pokemon.Level, attack.Id, attack.Name, attack.Power, attack.Defense, attack.Speed)
 	}
 	return
 }
 
-func DeletePokemonAttack(db *sql.DB) (n int64) {
-	var statement, err = db.Prepare("DELETE from pokemon_attack WHERE id_pokemon = ? AND id_attack = ?")
+func DeletePokemonAttack(db *sql.DB) (n int64, err error) {
+	statement, err := db.Prepare("DELETE from pokemon_attack WHERE id_pokemon = ? AND id_attack = ?")
 	if err != nil {
-		log.Fatal(err)
+		err = function.ErrDelete
+		return
 	}
 	defer statement.Close()
 
 	var pokemon_attack = PokemonAttack{}
 	fmt.Println("Enter pokemon id")
-	fmt.Scan(&pokemon_attack.Id_pokemon)
+	fmt.Scan(&pokemon_attack.IdPokemon)
 	fmt.Println("Enter attack id")
-	fmt.Scan(&pokemon_attack.Id_attack)
+	fmt.Scan(&pokemon_attack.IdAttack)
 
-	var res, _ = statement.Exec(pokemon_attack.Id_pokemon, pokemon_attack.Id_attack)
+	var res, _ = statement.Exec(pokemon_attack.IdPokemon, pokemon_attack.IdAttack)
 	n, _ = res.RowsAffected()
 
 	return
