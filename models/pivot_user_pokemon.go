@@ -42,12 +42,11 @@ func AddUserPokemon(db *sql.DB) (err error) {
 	var aux = UserPokemon{}
 	var row = db.QueryRow(`
 		SELECT 
-			users.id 
+			id_user
 			FROM 
 				user_pokemon 
-			INNER JOIN users ON users.id = user_pokemon.id_user 
 			WHERE 
-				users.id = ? AND user_pokemon.id_pokemon = ? 
+				user_pokemon.id_user = ? AND user_pokemon.id_pokemon = ? 
 		`, userPokemon.IdUser, userPokemon.IdPokemon)
 	err = row.Scan(&aux.IdUser)
 	if err != nil {
