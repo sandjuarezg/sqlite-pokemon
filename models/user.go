@@ -16,12 +16,12 @@ type User struct {
 }
 
 func AddUser(db *sql.DB) (err error) {
-	statement, err := db.Prepare("INSERT INTO users (name, password, ocupation) VALUES (?, ?, ?)")
+	smt, err := db.Prepare("INSERT INTO users (name, password, ocupation) VALUES (?, ?, ?)")
 	if err != nil {
 		err = function.ErrInsert
 		return
 	}
-	defer statement.Close()
+	defer smt.Close()
 
 	var user = User{}
 	fmt.Println("Enter a name")
@@ -62,7 +62,11 @@ func AddUser(db *sql.DB) (err error) {
 			function.CleanConsole(2)
 		}
 	}
-	statement.Exec(user.Name, user.Pass, user.Ocupa)
+	_, err = smt.Exec(user.Name, user.Pass, user.Ocupa)
+	if err != nil {
+		err = function.ErrInsert
+		return
+	}
 
 	return
 }
@@ -91,50 +95,52 @@ func ShowUser(db *sql.DB) (err error) {
 }
 
 func UpdateUser(db *sql.DB) (n int64, err error) {
-	statement, err := db.Prepare("UPDATE users SET password = ? WHERE id = ?")
-	if err != nil {
-		err = function.ErrUpdate
-		return
-	}
-	defer statement.Close()
-
 	var user = User{}
 	fmt.Println("Enter id")
 	fmt.Scan(&user.Id)
 	fmt.Println("Enter password to update")
 	fmt.Scan(&user.Pass)
 
-	var res, _ = statement.Exec(user.Pass, user.Id)
-	n, _ = res.RowsAffected()
+	row, err := db.Exec("UPDATE users SET password = ? WHERE id = ?", user.Pass, user.Id)
+	if err != nil {
+		err = function.ErrUpdate
+		return
+	}
+	n, err = row.RowsAffected()
+	if err != nil {
+		err = function.ErrUpdate
+		return
+	}
 
 	return
 }
 
 func DeleteUser(db *sql.DB) (n int64, err error) {
-	statement, err := db.Prepare("DELETE from users WHERE id = ?")
+	var user = User{}
+	fmt.Println("Enter id")
+	fmt.Scan(&user.Id)
+
+	row, err := db.Exec("DELETE from users WHERE id = ?", user.Id)
 	if err != nil {
 		err = function.ErrDelete
 		return
 	}
-	defer statement.Close()
-
-	var user = User{}
-	fmt.Println("Enter id")
-	fmt.Scan(&user.Id)
-	var res, _ = statement.Exec(user.Id)
-	n, _ = res.RowsAffected()
+	n, err = row.RowsAffected()
+	if err != nil {
+		err = function.ErrDelete
+		return
+	}
 
 	return
 }
 
 func SearchUser(db *sql.DB, id int) (user *User, err error) {
-	var aux User
-	var row = db.QueryRow("SELECT id, name, password, ocupation FROM users WHERE id = ?", id)
-	err = row.Scan(&aux.Id, &aux.Name, &aux.Pass, &aux.Ocupa)
+	user = new(User)
+	var row = db.QueryRow("SELECT id FROM users WHERE id = ?", id)
+	err = row.Scan(&user.Id)
 	if err != nil {
 		err = function.ErrScan
 		return
 	}
-	user = &aux
 	return
 }

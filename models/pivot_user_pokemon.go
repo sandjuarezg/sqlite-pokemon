@@ -14,25 +14,25 @@ type UserPokemon struct {
 }
 
 func AddUserPokemon(db *sql.DB) (err error) {
-	var user_pokemon = UserPokemon{}
-	statement, err := db.Prepare("INSERT INTO user_pokemon (id_user, id_pokemon) VALUES (?, ?)")
+	smt, err := db.Prepare("INSERT INTO user_pokemon (id_user, id_pokemon) VALUES (?, ?)")
 	if err != nil {
 		err = function.ErrInsert
 		return
 	}
-	defer statement.Close()
+	defer smt.Close()
 
+	var userPokemon = UserPokemon{}
 	fmt.Println("Enter user id")
-	fmt.Scan(&user_pokemon.IdUser)
-	_, err = SearchUser(db, user_pokemon.IdUser)
+	fmt.Scan(&userPokemon.IdUser)
+	_, err = SearchUser(db, userPokemon.IdUser)
 	if err != nil {
 		err = function.ErrUnknown
 		return
 	}
 
 	fmt.Println("Enter pokemon id")
-	fmt.Scan(&user_pokemon.IdPokemon)
-	_, err = SearchPokemon(db, user_pokemon.IdPokemon)
+	fmt.Scan(&userPokemon.IdPokemon)
+	_, err = SearchPokemon(db, userPokemon.IdPokemon)
 	if err != nil {
 		err = function.ErrUnknown
 		return
@@ -48,11 +48,11 @@ func AddUserPokemon(db *sql.DB) (err error) {
 			INNER JOIN users ON users.id = user_pokemon.id_user 
 			WHERE 
 				users.id = ? AND user_pokemon.id_pokemon = ? 
-		`, user_pokemon.IdUser, user_pokemon.IdPokemon)
+		`, userPokemon.IdUser, userPokemon.IdPokemon)
 	err = row.Scan(&aux.IdUser)
 	if err != nil {
 		//If no data found, then I can insert
-		statement.Exec(user_pokemon.IdUser, user_pokemon.IdPokemon)
+		smt.Exec(userPokemon.IdUser, userPokemon.IdPokemon)
 		err = nil
 		return
 	}
@@ -70,7 +70,7 @@ func ShowUserPokemonAll(db *sql.DB) (err error) {
 			INNER JOIN pokemons ON pokemons.id = user_pokemon.id_pokemon 
 			ORDER BY 
 				users.id ASC
-		`)
+	`)
 	if err != nil {
 		err = function.ErrShowData
 		return
@@ -93,9 +93,9 @@ func ShowUserPokemonAll(db *sql.DB) (err error) {
 }
 
 func ShowUserPokemonSpecific(db *sql.DB) (err error) {
-	var user_pokemon = UserPokemon{}
+	var userPokemon = UserPokemon{}
 	fmt.Println("Enter user id")
-	fmt.Scan(&user_pokemon.IdUser)
+	fmt.Scan(&userPokemon.IdUser)
 
 	row, err := db.Query(`
 		SELECT 
@@ -106,7 +106,7 @@ func ShowUserPokemonSpecific(db *sql.DB) (err error) {
 			INNER JOIN pokemons ON pokemons.id = user_pokemon.id_pokemon 
 			WHERE 
 				user_pokemon.id_user = ? 
-		`, user_pokemon.IdUser)
+		`, userPokemon.IdUser)
 	if err != nil {
 		err = function.ErrShowData
 		return
@@ -129,21 +129,22 @@ func ShowUserPokemonSpecific(db *sql.DB) (err error) {
 }
 
 func DeleteUserPokemon(db *sql.DB) (n int64, err error) {
-	statement, err := db.Prepare("DELETE from user_pokemon WHERE id_user = ? AND id_pokemon = ?")
+	var userPokemon = UserPokemon{}
+	fmt.Println("Enter user id")
+	fmt.Scan(&userPokemon.IdUser)
+	fmt.Println("Enter pokemon id")
+	fmt.Scan(&userPokemon.IdPokemon)
+
+	row, err := db.Exec("DELETE from user_pokemon WHERE id_user = ? AND id_pokemon = ?", userPokemon.IdUser, userPokemon.IdPokemon)
 	if err != nil {
 		err = function.ErrDelete
 		return
 	}
-	defer statement.Close()
-
-	var user_pokemon = UserPokemon{}
-	fmt.Println("Enter user id")
-	fmt.Scan(&user_pokemon.IdUser)
-	fmt.Println("Enter pokemon id")
-	fmt.Scan(&user_pokemon.IdPokemon)
-
-	var res, _ = statement.Exec(user_pokemon.IdUser, user_pokemon.IdPokemon)
-	n, _ = res.RowsAffected()
+	n, err = row.RowsAffected()
+	if err != nil {
+		err = function.ErrDelete
+		return
+	}
 
 	return
 }

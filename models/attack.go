@@ -17,12 +17,12 @@ type Attack struct {
 }
 
 func AddAttack(db *sql.DB) (err error) {
-	statement, err := db.Prepare("INSERT INTO attacks (name, power, defense, speed) VALUES (?, ?, ?, ?)")
+	smt, err := db.Prepare("INSERT INTO attacks (name, power, defense, speed) VALUES (?, ?, ?, ?)")
 	if err != nil {
 		err = function.ErrInsert
 		return
 	}
-	defer statement.Close()
+	defer smt.Close()
 
 	var attacks = Attack{}
 	fmt.Println("Enter a name")
@@ -34,7 +34,11 @@ func AddAttack(db *sql.DB) (err error) {
 	fmt.Println("Enter speed")
 	fmt.Scan(&attacks.Speed)
 
-	statement.Exec(attacks.Name, attacks.Power, attacks.Defense, attacks.Speed)
+	_, err = smt.Exec(attacks.Name, attacks.Power, attacks.Defense, attacks.Speed)
+	if err != nil {
+		err = function.ErrInsert
+		return
+	}
 
 	return
 }
@@ -63,50 +67,51 @@ func ShowAttacks(db *sql.DB) (err error) {
 }
 
 func UpdateAttacks(db *sql.DB) (n int64, err error) {
-	statement, err := db.Prepare("UPDATE attacks SET name = ? WHERE id = ?")
-	if err != nil {
-		err = function.ErrUpdate
-		return
-	}
-	defer statement.Close()
-
 	var attacks = Attack{}
 	fmt.Println("Enter id")
 	fmt.Scan(&attacks.Id)
 	fmt.Println("Enter name to update")
 	fmt.Scan(&attacks.Name)
 
-	var res, _ = statement.Exec(attacks.Name, attacks.Id)
-	n, _ = res.RowsAffected()
+	row, err := db.Exec("UPDATE attacks SET name = ? WHERE id = ?", attacks.Name, attacks.Id)
+	if err != nil {
+		err = function.ErrUpdate
+		return
+	}
+	n, err = row.RowsAffected()
+	if err != nil {
+		err = function.ErrUpdate
+		return
+	}
 
 	return
 }
 
 func DeleteAttacks(db *sql.DB) (n int64, err error) {
-	statement, err := db.Prepare("DELETE from attacks WHERE id = ?")
-	if err != nil {
-		err = function.ErrDelete
-		return
-	}
-	defer statement.Close()
-
 	var attacks = Attack{}
 	fmt.Println("Enter id")
 	fmt.Scan(&attacks.Id)
-	var res, _ = statement.Exec(attacks.Id)
-	n, _ = res.RowsAffected()
+
+	row, err := db.Exec("DELETE from attacks WHERE id = ?", attacks.Id)
+	if err != nil {
+		err = function.ErrShowData
+		return
+	}
+	n, err = row.RowsAffected()
+	if err != nil {
+		err = function.ErrUpdate
+		return
+	}
 
 	return
 }
 
 func SearchAttacks(db *sql.DB, id int) (attacks *Attack, err error) {
-	var aux Attack
-	var row = db.QueryRow("SELECT id, name, power, defense, speed FROM attacks WHERE id = ?", id)
-	err = row.Scan(&aux.Id, &aux.Name, &aux.Power, &aux.Defense, &aux.Speed)
+	attacks = new(Attack)
+	var row = db.QueryRow("SELECT id FROM attacks WHERE id = ?", id)
+	err = row.Scan(&attacks.Id)
 	if err != nil {
-		err = function.ErrScan
 		return
 	}
-	attacks = &aux
 	return
 }

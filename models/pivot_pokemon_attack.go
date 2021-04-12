@@ -14,25 +14,25 @@ type PokemonAttack struct {
 }
 
 func AddPokemonAttack(db *sql.DB) (err error) {
-	var pokemon_attack = PokemonAttack{}
-	statement, err := db.Prepare("INSERT INTO pokemon_attack (id_pokemon, id_attack) VALUES (?, ?)")
+	smt, err := db.Prepare("INSERT INTO pokemon_attack (id_pokemon, id_attack) VALUES (?, ?)")
 	if err != nil {
 		err = function.ErrInsert
 		return
 	}
-	defer statement.Close()
+	defer smt.Close()
 
+	var pokemonAttack = PokemonAttack{}
 	fmt.Println("Enter pokemon id")
-	fmt.Scan(&pokemon_attack.IdPokemon)
-	_, err = SearchPokemon(db, pokemon_attack.IdPokemon)
+	fmt.Scan(&pokemonAttack.IdPokemon)
+	_, err = SearchPokemon(db, pokemonAttack.IdPokemon)
 	if err != nil {
 		err = function.ErrUnknown
 		return
 	}
 
 	fmt.Println("Enter attack id")
-	fmt.Scan(&pokemon_attack.IdAttack)
-	_, err = SearchAttacks(db, pokemon_attack.IdAttack)
+	fmt.Scan(&pokemonAttack.IdAttack)
+	_, err = SearchAttacks(db, pokemonAttack.IdAttack)
 	if err != nil {
 		err = function.ErrUnknown
 		return
@@ -48,11 +48,11 @@ func AddPokemonAttack(db *sql.DB) (err error) {
 			INNER JOIN pokemons ON pokemon_attack.id_pokemon = pokemons.id
 			WHERE 
 				pokemons.id = ? AND pokemon_attack.id_attack = ?
-		`, pokemon_attack.IdPokemon, pokemon_attack.IdAttack)
+		`, pokemonAttack.IdPokemon, pokemonAttack.IdAttack)
 	err = row.Scan(&aux.IdPokemon)
 	if err != nil {
 		//If no data found, then I can insert
-		statement.Exec(pokemon_attack.IdPokemon, pokemon_attack.IdAttack)
+		smt.Exec(pokemonAttack.IdPokemon, pokemonAttack.IdAttack)
 		err = nil
 		return
 	}
@@ -93,9 +93,9 @@ func ShowPokemonAttackAll(db *sql.DB) (err error) {
 }
 
 func ShowPokemonAttackSpecific(db *sql.DB) (err error) {
-	var pokemon_attack = PokemonAttack{}
+	var pokemonAttack = PokemonAttack{}
 	fmt.Println("Enter pokemon id")
-	fmt.Scan(&pokemon_attack.IdPokemon)
+	fmt.Scan(&pokemonAttack.IdPokemon)
 
 	row, err := db.Query(`
 		SELECT 
@@ -106,7 +106,7 @@ func ShowPokemonAttackSpecific(db *sql.DB) (err error) {
 			INNER JOIN attacks ON attacks.id = pokemon_attack.id_attack
 			WHERE 
 				pokemon_attack.id_pokemon = ?
-		`, pokemon_attack.IdPokemon)
+		`, pokemonAttack.IdPokemon)
 	if err != nil {
 		err = function.ErrShowData
 		return
@@ -129,21 +129,22 @@ func ShowPokemonAttackSpecific(db *sql.DB) (err error) {
 }
 
 func DeletePokemonAttack(db *sql.DB) (n int64, err error) {
-	statement, err := db.Prepare("DELETE from pokemon_attack WHERE id_pokemon = ? AND id_attack = ?")
+	var pokemonAttack = PokemonAttack{}
+	fmt.Println("Enter pokemon id")
+	fmt.Scan(&pokemonAttack.IdPokemon)
+	fmt.Println("Enter attack id")
+	fmt.Scan(&pokemonAttack.IdAttack)
+
+	row, err := db.Exec("DELETE from pokemon_attack WHERE id_pokemon = ? AND id_attack = ?", pokemonAttack.IdPokemon, pokemonAttack.IdAttack)
 	if err != nil {
 		err = function.ErrDelete
 		return
 	}
-	defer statement.Close()
-
-	var pokemon_attack = PokemonAttack{}
-	fmt.Println("Enter pokemon id")
-	fmt.Scan(&pokemon_attack.IdPokemon)
-	fmt.Println("Enter attack id")
-	fmt.Scan(&pokemon_attack.IdAttack)
-
-	var res, _ = statement.Exec(pokemon_attack.IdPokemon, pokemon_attack.IdAttack)
-	n, _ = res.RowsAffected()
+	n, err = row.RowsAffected()
+	if err != nil {
+		err = function.ErrDelete
+		return
+	}
 
 	return
 }

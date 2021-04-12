@@ -16,12 +16,12 @@ type Pokemon struct {
 }
 
 func AddPokemon(db *sql.DB) (err error) {
-	statement, err := db.Prepare("INSERT INTO pokemons (name, type, level) VALUES (?, ?, ?)")
+	smt, err := db.Prepare("INSERT INTO pokemons (name, type, level) VALUES (?, ?, ?)")
 	if err != nil {
 		err = function.ErrInsert
 		return
 	}
-	defer statement.Close()
+	defer smt.Close()
 
 	var poke = Pokemon{}
 	fmt.Println("Enter a name")
@@ -75,7 +75,11 @@ func AddPokemon(db *sql.DB) (err error) {
 	}
 	fmt.Println("Enter a lever")
 	fmt.Scan(&poke.Level)
-	statement.Exec(poke.Name, poke.Type, poke.Level)
+	_, err = smt.Exec(poke.Name, poke.Type, poke.Level)
+	if err != nil {
+		err = function.ErrInsert
+		return
+	}
 
 	return
 }
@@ -99,54 +103,57 @@ func ShowPokemon(db *sql.DB) (err error) {
 		}
 		fmt.Printf("|%-7d|%-15s|%-15s|%-7d|\n", poke.Id, poke.Name, poke.Type, poke.Level)
 	}
+
 	return
 }
 
 func UpdatePokemon(db *sql.DB) (n int64, err error) {
-	statement, err := db.Prepare("UPDATE pokemons SET level = ? WHERE id = ?")
-	if err != nil {
-		err = function.ErrUpdate
-		return
-	}
-	defer statement.Close()
-
 	var poke = Pokemon{}
 	fmt.Println("Enter id")
 	fmt.Scan(&poke.Id)
 	fmt.Println("Enter level to update")
 	fmt.Scan(&poke.Level)
 
-	var res, _ = statement.Exec(poke.Level, poke.Id)
-	n, _ = res.RowsAffected()
+	row, err := db.Exec("UPDATE pokemons SET level = ? WHERE id = ?", poke.Level, poke.Id)
+	if err != nil {
+		err = function.ErrUpdate
+		return
+	}
+	n, err = row.RowsAffected()
+	if err != nil {
+		err = function.ErrUpdate
+		return
+	}
 
 	return
 }
 
 func DeletePokemon(db *sql.DB) (n int64, err error) {
-	statement, err := db.Prepare("DELETE from pokemons WHERE id = ?")
+	var poke = Pokemon{}
+	fmt.Println("Enter id")
+	fmt.Scan(&poke.Id)
+
+	row, err := db.Exec("DELETE from pokemons WHERE id = ?", poke.Id)
 	if err != nil {
 		err = function.ErrDelete
 		return
 	}
-	defer statement.Close()
-
-	var poke = Pokemon{}
-	fmt.Println("Enter id")
-	fmt.Scan(&poke.Id)
-	var res, _ = statement.Exec(poke.Id)
-	n, _ = res.RowsAffected()
+	n, err = row.RowsAffected()
+	if err != nil {
+		err = function.ErrDelete
+		return
+	}
 
 	return
 }
 
 func SearchPokemon(db *sql.DB, id int) (pokemon *Pokemon, err error) {
-	var aux Pokemon
-	var row = db.QueryRow("SELECT id, name, type, level FROM pokemons WHERE id = ?", id)
-	err = row.Scan(&aux.Id, &aux.Name, &aux.Type, &aux.Level)
+	pokemon = new(Pokemon)
+	var row = db.QueryRow("SELECT id FROM pokemons WHERE id = ?", id)
+	err = row.Scan(&pokemon.Id)
 	if err != nil {
 		err = function.ErrScan
 		return
 	}
-	pokemon = &aux
 	return
 }
